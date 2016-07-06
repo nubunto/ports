@@ -8,20 +8,19 @@ import (
 func TestLaunch(t *testing.T) {
 	table := []struct {
 		program  string
+		params   []string
 		expected []byte
 	}{
-		{`echo "hello world"`, []byte("hello world")},
+		{"echo", []string{"hello world"}, []byte("hello world\n")},
 	}
 
 	for _, test := range table {
-		ch := make(chan []byte)
-		err := Launch(test.program, ch)
+		result, err := Launch(test.program, test.params)
 		if err != nil {
 			t.Errorf("launch returned error: %v\n", err)
 		}
-		ret := <-ch
-		if !bytes.Equal(test.expected, ret) {
-			t.Errorf("Expected %v, got %v\n", test.expected, ret)
+		if !bytes.Equal(test.expected, result) {
+			t.Errorf("Expected %v, got %v\n", test.expected, result)
 		}
 	}
 }

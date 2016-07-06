@@ -2,31 +2,38 @@ package ports
 
 import (
 	"bytes"
-	"log"
 	"os/exec"
 )
 
-func Launch(program string, outputChan chan []byte) error {
-	var stdout bytes.Buffer
-	cmd := exec.Cmd{
-		Path:   program,
-		Stdout: &stdout,
-		Stderr: &stdout,
-	}
+type Program interface {
+	Run() ([]byte, error)
+}
+
+type baseProgram struct {
+	name   string
+	params []string
+	stdout bytes.Buffer
+}
+
+func (b baseProgram) Run() ([]byte, error) {
+	cmd := exec.Command(b.name, b.params...)
+	cmd.Stdout = &b.stdout
 	err := cmd.Start()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	go func() {
-		err := cmd.Wait()
-		if err != nil {
-			// what to do if command fails? no way to access the top goroutine, so... ?
-			// decide what to do with it later.
-			// maybe decouple Launch from doing everything...
-			log.Println(err)
-		}
-		outputChan <- stdout.Bytes()
-		close(outputChan)
-	}()
-	return nil
+	err = cmd.Wait()
+	if err != nil {
+		return nil, err
+	}
+	return b.stdout.Bytes(), nil
+}
+
+func Launch(name string, params []string) ([]byte, error) {
+	b := &baseProgram{name: name, params: params}
+	res, err := b.Run()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

@@ -8,24 +8,19 @@ Ports is a library designed to build programs that interface directly to a Go pr
 package main
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/nubunto/ports"
 )
 
-var p = `echo "hello, world!`
-
 func main() {
-	program, err := ports.Launch(p, nil)
+	program, err := ports.Launch("echo", []string{"hello, world!"})
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return
 	}
 
-	// program is a channel that streams the output from the program,
-	// running in a different goroutine
-	for out := range program {
-		log.Println(string(out))
-	}
+	fmt.Println(string(program))
 }
 
 Result: hello, world!
